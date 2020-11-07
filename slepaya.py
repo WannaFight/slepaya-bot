@@ -6,14 +6,14 @@ import telebot
 from time import sleep
 
 
-TOKEN = getenv('BOT_TOKEN', open('b_tok.txt', 'r').read())
+TOKEN = getenv('BOT_TOKEN', None))
 slepaya = telebot.TeleBot(TOKEN)
 quotes = open('quotes.csv').read().splitlines()
 
 scheduler = BackgroundScheduler()
 
-AWS_KEY_ID = getenv('AWS_KEY_ID', open('aws.txt', 'r').read().splitlines()[0])
-AWS_SECRET = getenv('AWS_SECRET', open('aws.txt', 'r').read().splitlines()[1])
+AWS_KEY_ID = getenv('AWS_KEY_ID', None)
+AWS_SECRET = getenv('AWS_SECRET', None)
 
 dyndb = boto3.resource('dynamodb',
                        aws_access_key_id=AWS_KEY_ID,
