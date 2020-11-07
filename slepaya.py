@@ -65,8 +65,11 @@ def unsubscribe(message):
         sleep(0.8)
         slepaya.send_message(cid, "Ладно, сейчас попрошу внучку " +
                              "тебя убрать из списка")
-        
         table.delete_item(Key=item)
+        sleep(0.9)
+        slepaya.send_message(cid, "Внучка выписала тебя из тетрадки")
+        slepaya.send_message(cid, "Помни одно - ты всегда ко мне" +
+                             " можешь обратиться")
     except KeyError:
         slepaya.send_message(cid, "А тебя еще не записывали")
         slepaya.send_message(cid, "Могу попросить мою внучку тебя записать")
