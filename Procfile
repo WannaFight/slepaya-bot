@@ -1,0 +1,1 @@
+worker: python slepaya.py
