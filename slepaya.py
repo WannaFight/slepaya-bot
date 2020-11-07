@@ -59,12 +59,14 @@ def unsubscribe(message):
     item = {'chat_id': str(cid)}
 
     try:
-        table.get_item(Item=item)['Item']
+        table.get_item(Key=item)['Item']
 
         slepaya.send_message(cid, f"Ох, ох, {name}, что-ж делать-то...")
         sleep(0.8)
         slepaya.send_message(cid, "Ладно, сейчас попрошу внучку " +
                              "тебя убрать из списка")
+        
+        table.delete_item(Key=item)
     except KeyError:
         slepaya.send_message(cid, "А тебя еще не записывали")
         slepaya.send_message(cid, "Могу попросить мою внучку тебя записать")
