@@ -6,7 +6,7 @@ import telebot
 from time import sleep
 
 
-TOKEN = getenv('BOT_TOKEN', None))
+TOKEN = getenv('BOT_TOKEN', None)
 slepaya = telebot.TeleBot(TOKEN)
 quotes = open('quotes.csv').read().splitlines()
 
