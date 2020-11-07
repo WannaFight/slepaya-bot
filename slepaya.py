@@ -25,7 +25,7 @@ table = dyndb.Table('users')
 @slepaya.message_handler(commands=['start'])
 def send_welcome(message):
     cid = message.chat.id
-    print(cid, message.from_user.username)
+    print(f"LOGS: [START] {cid} - {message.from_user.username}")
     slepaya.send_message(cid, f"Здравствуй, {message.from_user.first_name}")
     sleep(0.5)
     slepaya.send_message(cid, "Ничего не говори, знаю")
@@ -92,6 +92,7 @@ def reply_to_others(message):
 def send_notifications():
     ids = table.scan()['Items']
     for c_id in ids:
+        print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
         q = random.choice(quotes)
         slepaya.send_message(c_id['chat_id'], q)
         sleep(0.04)
