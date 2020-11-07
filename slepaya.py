@@ -88,7 +88,7 @@ def reply_to_others(message):
 
 
 @scheduler.scheduled_job("interval", start_date='2020-11-7 06:33:00',
-                         seconds=24, id='notifications')
+                         hours=24, id='notifications')
 def send_notifications():
     ids = table.scan()['Items']
     for c_id in ids:
