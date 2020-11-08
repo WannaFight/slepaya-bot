@@ -96,7 +96,7 @@ def reply_to_others(message):
 
 
 @scheduler.scheduled_job("interval", start_date='2020-11-7 06:33:00',
-                         minutes=1, id='notifications')
+                         hours=24, id='notifications')
 def send_notifications():
     dyndb = boto3.resource('dynamodb',
                            aws_access_key_id=AWS_KEY_ID,
