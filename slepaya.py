@@ -105,6 +105,19 @@ def send_generated_quote(message):
     print(f"LOGS: [BADVICE] {cid} - {message.from_user.username}")
 
 
+@slepaya.message_handler(commands=['info'])
+def send_info(message):
+    cid = message.chat.id
+    slepaya.send_message(cid, "Сказавши мне /badvice, получишь мудроть чудную")
+    sleep(0.5)
+    slepaya.send_message(cid, "Их мне дух древний подсказывает, а я вам пишу")
+    sleep(0.4)
+    slepaya.send_message(cid, "Дух говорит, что эти мудрости " +
+                         "из Байесовской сети берет")
+    sleep(0.6)
+    slepaya.send_message(cid, "А что это, можно в ваших Интернетах посмотреть")
+
+
 @slepaya.message_handler(func=lambda message: True)
 def reply_to_others(message):
     slepaya.reply_to(message, "Ишь ты - за словом в карман не лезешь")
