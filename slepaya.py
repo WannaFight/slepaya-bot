@@ -1,6 +1,8 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 import boto3
+from datetime import datetime
 from os import getenv
+from lunarcalendar import Solar, Converter
 import random
 import telebot
 from time import sleep
@@ -49,7 +51,7 @@ def subscribe(message):
                                   "буду советом тебя одаривать")
 
         table.put_item(Item=item)
-
+        print(f"LOGS: [SUB] {cid} - {message.from_user.username}")
         slepaya.send_message(cid, "Ну все, ступай с миром")
         slepaya.send_message(cid, "Советом тебя не обделю")
 
@@ -74,6 +76,7 @@ def unsubscribe(message):
         slepaya.send_message(cid, "Ладно, сейчас попрошу внучку " +
                              "тебя убрать из списка")
         table.delete_item(Key=item)
+        print(f"LOGS: [UNSUB] {cid} - {message.from_user.username}")
         sleep(0.9)
         slepaya.send_message(cid, "Внучка выписала тебя из тетрадки")
         slepaya.send_message(cid, "Помни одно - ты всегда ко мне" +
@@ -87,7 +90,9 @@ def unsubscribe(message):
 @slepaya.message_handler(commands=['advice'])
 def send_random_quote(message):
     q = random.choice(quotes)
-    slepaya.send_message(message.chat.id, q)
+    cid = message.chat.id
+    print(f"LOGS: [ADVICE] {cid} - {message.from_user.username}")
+    slepaya.send_message(cid, q)
 
 
 @slepaya.message_handler(func=lambda message: True)
@@ -104,12 +109,20 @@ def send_notifications():
                            region_name='eu-north-1')
     table = dyndb.Table('users')
     ids = table.scan()['Items']
+
+    cur_date = datetime.now()
+    solar = Solar(cur_date.year, cur_date.month, cur_date.day)
+    lunar = Converter.Solar2Lunar(solar).day
+    lunar_msg = f"{random.choice(['За окном', 'На дворе', 'Сегодня'])}"
+    lunar_msg += f"{lunar} {random.choice(['лунные сутки', 'лунный день'])}"
+
     for c_id in ids:
         q = random.choice(quotes)
         try:
+            slepaya.send_message(c_id, lunar_msg)
             slepaya.send_message(c_id['chat_id'], q)
             print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
-            sleep(0.04)
+            sleep(0.09)
         except telebot.apihelper.ApiTelegramException:
             pass
 
