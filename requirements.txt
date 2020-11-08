@@ -1,3 +1,4 @@
 APScheduler==3.6.3
 boto3==1.16.12
+LunarCalendar==0.0.9
 pyTelegramBotAPI==3.7.3
