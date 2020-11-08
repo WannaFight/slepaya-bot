@@ -6,6 +6,7 @@ from lunarcalendar import Solar, Converter
 import random
 import telebot
 from time import sleep
+from quotes_generator import generate_quote
 
 
 AWS_KEY_ID = getenv('AWS_KEY_ID', None)
@@ -91,8 +92,17 @@ def unsubscribe(message):
 def send_random_quote(message):
     q = random.choice(quotes)
     cid = message.chat.id
-    print(f"LOGS: [ADVICE] {cid} - {message.from_user.username}")
     slepaya.send_message(cid, q)
+    print(f"LOGS: [ADVICE] {cid} - {message.from_user.username}")
+
+
+@slepaya.message_handler(commands=['badvice'])
+def send_generated_quote(message):
+    cid = message.chat.id
+    text = generate_quote('quotes.csv')
+    slepaya.send_message(cid, text)
+    slepaya.send_message(cid, "Так сказал свет, посетивший меня только-что")
+    print(f"LOGS: [BADVICE] {cid} - {message.from_user.username}")
 
 
 @slepaya.message_handler(func=lambda message: True)
@@ -113,7 +123,7 @@ def send_notifications():
     cur_date = datetime.now()
     solar = Solar(cur_date.year, cur_date.month, cur_date.day)
     lunar = Converter.Solar2Lunar(solar).day
-    lunar_msg = f"{random.choice(['За окном', 'На дворе', 'Сегодня'])}"
+    lunar_msg = f"{random.choice(['За окном', 'На дворе', 'Сегодня'])} "
     lunar_msg += f"{lunar} {random.choice(['лунные сутки', 'лунный день'])}"
 
     for c_id in ids:
