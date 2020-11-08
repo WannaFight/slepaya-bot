@@ -105,10 +105,13 @@ def send_notifications():
     table = dyndb.Table('users')
     ids = table.scan()['Items']
     for c_id in ids:
-        print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
         q = random.choice(quotes)
-        slepaya.send_message(c_id['chat_id'], q)
-        sleep(0.04)
+        try:
+            slepaya.send_message(c_id['chat_id'], q)
+            print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
+            sleep(0.04)
+        except telebot.apihelper.ApiTelegramException:
+            pass
 
 
 scheduler.start()
