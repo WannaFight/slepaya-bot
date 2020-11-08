@@ -3,10 +3,11 @@ import boto3
 from datetime import datetime
 from os import getenv
 from lunarcalendar import Solar, Converter
+from markovify import NewlineText
 import random
 import telebot
 from time import sleep
-from quotes_generator import generate_quote
+# from quotes_generator import generate_quote
 
 
 AWS_KEY_ID = getenv('AWS_KEY_ID', None)
@@ -14,7 +15,8 @@ AWS_SECRET = getenv('AWS_SECRET', None)
 TOKEN = getenv('BOT_TOKEN', None)
 
 slepaya = telebot.TeleBot(TOKEN)
-quotes = open('quotes.csv').read().splitlines()
+quotes_markof = open('quotes.csv').read()
+quotes = quotes_markof.splitlines()
 
 scheduler = BackgroundScheduler()
 
@@ -99,7 +101,8 @@ def send_random_quote(message):
 @slepaya.message_handler(commands=['badvice'])
 def send_generated_quote(message):
     cid = message.chat.id
-    text = generate_quote('quotes.csv')
+    # text = generate_quote('quotes.csv')
+    text = NewlineText(quotes_markof).make_sentence()
     slepaya.send_message(cid, text)
     slepaya.send_message(cid, "Так сказал свет, посетивший меня только-что")
     print(f"LOGS: [BADVICE] {cid} - {message.from_user.username}")
@@ -113,7 +116,7 @@ def send_info(message):
     slepaya.send_message(cid, "Их мне дух древний подсказывает, а я вам пишу")
     sleep(0.4)
     slepaya.send_message(cid, "Дух говорит, что эти мудрости " +
-                         "из Байесовской сети берет")
+                         "из Марковской цепи берет")
     sleep(0.6)
     slepaya.send_message(cid, "А что это, можно в ваших Интернетах посмотреть")
 
