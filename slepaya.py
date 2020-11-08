@@ -6,20 +6,14 @@ import telebot
 from time import sleep
 
 
+AWS_KEY_ID = getenv('AWS_KEY_ID', None)
+AWS_SECRET = getenv('AWS_SECRET', None)
 TOKEN = getenv('BOT_TOKEN', None)
+
 slepaya = telebot.TeleBot(TOKEN)
 quotes = open('quotes.csv').read().splitlines()
 
 scheduler = BackgroundScheduler()
-
-AWS_KEY_ID = getenv('AWS_KEY_ID', None)
-AWS_SECRET = getenv('AWS_SECRET', None)
-
-dyndb = boto3.resource('dynamodb',
-                       aws_access_key_id=AWS_KEY_ID,
-                       aws_secret_access_key=AWS_SECRET,
-                       region_name='eu-north-1')
-table = dyndb.Table('users')
 
 
 @slepaya.message_handler(commands=['start'])
@@ -37,6 +31,14 @@ def send_welcome(message):
 def subscribe(message):
     cid = message.chat.id
     item = {'chat_id': str(cid)}
+
+    dyndb = boto3.resource('dynamodb',
+                           aws_access_key_id=AWS_KEY_ID,
+                           aws_secret_access_key=AWS_SECRET,
+                           region_name='eu-north-1')
+
+    table = dyndb.Table('users')
+
     try:
         table.get_item(Key=item)['Item']
         slepaya.send_message(cid, "Моя внучка тебя уже записывала")
@@ -57,6 +59,12 @@ def unsubscribe(message):
     cid = message.chat.id
     name = message.from_user.first_name
     item = {'chat_id': str(cid)}
+
+    dyndb = boto3.resource('dynamodb',
+                           aws_access_key_id=AWS_KEY_ID,
+                           aws_secret_access_key=AWS_SECRET,
+                           region_name='eu-north-1')
+    table = dyndb.Table('users')
 
     try:
         table.get_item(Key=item)['Item']
@@ -90,6 +98,11 @@ def reply_to_others(message):
 @scheduler.scheduled_job("interval", start_date='2020-11-7 06:33:00',
                          hours=24, id='notifications')
 def send_notifications():
+    dyndb = boto3.resource('dynamodb',
+                           aws_access_key_id=AWS_KEY_ID,
+                           aws_secret_access_key=AWS_SECRET,
+                           region_name='eu-north-1')
+    table = dyndb.Table('users')
     ids = table.scan()['Items']
     for c_id in ids:
         print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
