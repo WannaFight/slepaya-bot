@@ -21,7 +21,8 @@ slepaya = telebot.TeleBot(TOKEN)
 
 markup = ReplyKeyboardMarkup(resize_keyboard=True)
 markup.row(KeyboardButton('/advice'),
-           KeyboardButton('/badvice'))
+           KeyboardButton('/badvice'),
+           KeyboardButton('/help'))
 markup.row(KeyboardButton('/sub'),
            KeyboardButton('/unsub'),
            KeyboardButton('/info'))
@@ -142,6 +143,20 @@ def send_info(message):
     slepaya.send_message(cid, "А что это за зверь такой, Марковские цепи, " +
                          "можно в ваших Интернетах посмотреть",
                          reply_markup=markup)
+
+
+@slepaya.message_handler(commands=['help'])
+def send_help(message):
+    cid = message.chat.id
+    txt = ("/advice - Баба Нина одарить Вас мудростью случайной\n"
+           "/badvice - Святой Дух посетит бабу Нину\n"
+           "/sub - Баба Нина будет одаривать Вас мудростью каждый день\n"
+           "/unsub - Отказаться от ежедневных мудростей бабы Нины\n"
+           "/info - Откуда мудрости /badvice духа древнего берутся\n"
+           "/help - Какие услуги могу оказать тебе\n")
+    slepaya.send_message(cid, "Вот что жду от тебя услшыть")
+    sleep(0.6)
+    slepaya.send_message(cid, txt)
 
 
 @slepaya.message_handler(func=lambda message: True)
