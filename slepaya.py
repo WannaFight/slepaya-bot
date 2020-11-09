@@ -167,7 +167,7 @@ def reply_to_others(message):
 
 
 @scheduler.scheduled_job("interval", start_date='2020-11-7 06:33:00',
-                         hours=24, id='notifications')
+                         minutes=2, id='notifications')
 def send_notifications():
     dyndb = boto3.resource('dynamodb',
                            aws_access_key_id=AWS_KEY_ID,
@@ -191,7 +191,7 @@ def send_notifications():
             print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
             sleep(0.09)
         except telebot.apihelper.ApiTelegramException as e:
-            print(f"LOGS: NOTIFICATIONS_EXCEPTION {e.message}")
+            print(f"LOGS: NOTIFICATIONS_EXCEPTION {e}")
 
 
 scheduler.start()
