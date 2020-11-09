@@ -167,31 +167,31 @@ def reply_to_others(message):
 
 
 @scheduler.scheduled_job("interval", start_date='2020-11-7 06:33:00',
-                         minutes=1, id='notifications')
+                         minutes=3, id='notifications')
 def send_notifications():
-    # dyndb = boto3.resource('dynamodb',
-    #                        aws_access_key_id=AWS_KEY_ID,
-    #                        aws_secret_access_key=AWS_SECRET,
-    #                        region_name='eu-north-1')
-    # table = dyndb.Table('users')
-    # ids = table.scan()['Items']
+    dyndb = boto3.resource('dynamodb',
+                           aws_access_key_id=AWS_KEY_ID,
+                           aws_secret_access_key=AWS_SECRET,
+                           region_name='eu-north-1')
+    table = dyndb.Table('users')
+    ids = table.scan()['Items']
+    # Items = {'chat_id': 'CHAT_ID:str'}
 
-    # cur_date = datetime.now()
-    # solar = Solar(cur_date.year, cur_date.month, cur_date.day)
-    # lunar = Converter.Solar2Lunar(solar).day
-    # lunar_msg = f"{random.choice(['За окном', 'На дворе', 'Сегодня'])} "
-    # lunar_msg += f"{lunar} {random.choice(['лунные сутки', 'лунный день'])}"
+    cur_date = datetime.now()
+    solar = Solar(cur_date.year, cur_date.month, cur_date.day)
+    lunar = Converter.Solar2Lunar(solar).day
+    lunar_msg = f"{random.choice(['За окном', 'На дворе', 'Сегодня'])} "
+    lunar_msg += f"{lunar} {random.choice(['лунные сутки', 'лунный день'])}"
 
-    # for c_id in ids:
-    #     q = random.choice(quotes)
-    #     try:
-    #         slepaya.send_message(c_id, lunar_msg)
-    #         slepaya.send_message(c_id['chat_id'], q)
-    #         print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
-    #         sleep(0.09)
-    #     except telebot.apihelper.ApiTelegramException:
-    #         pass
-    print("Notifications were sent!")
+    for c_id in ids:
+        q = random.choice(quotes)
+        try:
+            slepaya.send_message(c_id['chat_id'], lunar_msg)
+            slepaya.send_message(c_id['chat_id'], q)
+            print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
+            sleep(0.09)
+        except telebot.apihelper.ApiTelegramException as e:
+            print(f"LOGS: NOTIFICATIONS_EXCEPTION {e.message}")
 
 
 scheduler.start()
