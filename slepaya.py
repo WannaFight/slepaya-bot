@@ -124,7 +124,7 @@ def send_generated_quote(message):
     cid = message.chat.id
     # text = generate_quote('quotes.csv')
     text = NewlineText(quotes_markof).make_sentence()
-    slepaya.send_message(cid, text)
+    slepaya.send_message(cid, text if text else "Дух древний промолчал")
     slepaya.send_message(cid, "Так сказал дух древний, " +
                          "посетивший меня только-что", reply_markup=markup)
     print(f"LOGS: [BADVICE] {cid} - {message.from_user.username}")

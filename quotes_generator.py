@@ -79,4 +79,3 @@ def generate_sentence(model):
 def generate_quote(quotes_file):
     temp_model = train(quotes_file)
     return generate_sentence(temp_model)
-
