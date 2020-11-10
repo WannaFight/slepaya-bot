@@ -20,12 +20,12 @@ TOKEN = getenv('BOT_TOKEN', None)
 slepaya = telebot.TeleBot(TOKEN)
 
 markup = ReplyKeyboardMarkup(resize_keyboard=True)
-markup.row(KeyboardButton('Верный совет'),
-           KeyboardButton('Чудной совет'),
-           KeyboardButton('Команды'))
-markup.row(KeyboardButton('Подписаться'),
-           KeyboardButton('Отписаться'),
-           KeyboardButton('Инфа'))
+markup.row(KeyboardButton('/advice'),
+           KeyboardButton('/badvice'),
+           KeyboardButton('/help'))
+markup.row(KeyboardButton('/sub'),
+           KeyboardButton('/unsub'),
+           KeyboardButton('/info'))
 
 
 quotes_markof = open('quotes.csv').read()
