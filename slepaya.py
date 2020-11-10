@@ -155,7 +155,7 @@ def send_help(message):
            "/unsub - Отказаться от ежедневных мудростей бабы Нины\n"
            "/info - Откуда мудрости /badvice духа древнего берутся\n"
            "/help - Какие услуги могу оказать тебе\n")
-    slepaya.send_message(cid, "Вот что жду от тебя услшыть")
+    slepaya.send_message(cid, "Вот что жду от тебя услышатьь")
     sleep(0.6)
     slepaya.send_message(cid, txt)
 
