@@ -46,7 +46,7 @@ def send_welcome(message):
                          reply_markup=markup)
 
 
-@slepaya.message_handler(commands=['sub'], regexp='Подписаться')
+@slepaya.message_handler(commands=['sub'])
 def subscribe(message):
     cid = message.chat.id
     item = {'chat_id': str(cid)}
@@ -78,7 +78,7 @@ def subscribe(message):
                              reply_markup=markup)
 
 
-@slepaya.message_handler(commands=['unsub'], regexp='Отписаться')
+@slepaya.message_handler(commands=['unsub'])
 def unsubscribe(message):
     cid = message.chat.id
     name = message.from_user.first_name
@@ -111,7 +111,7 @@ def unsubscribe(message):
         slepaya.send_message(cid, '/sub или подписаться', reply_markup=markup)
 
 
-@slepaya.message_handler(commands=['advice'], regexp='Верный совет')
+@slepaya.message_handler(commands=['advice'])
 def send_random_quote(message):
     q = random.choice(quotes)
     cid = message.chat.id
@@ -119,7 +119,7 @@ def send_random_quote(message):
     print(f"LOGS: [ADVICE] {cid} - {message.from_user.username}")
 
 
-@slepaya.message_handler(commands=['badvice'], regexp='Чудной совет')
+@slepaya.message_handler(commands=['badvice'])
 def send_generated_quote(message):
     cid = message.chat.id
     # text = generate_quote('quotes.csv')
@@ -130,7 +130,7 @@ def send_generated_quote(message):
     print(f"LOGS: [BADVICE] {cid} - {message.from_user.username}")
 
 
-@slepaya.message_handler(commands=['info'], regexp='Инфа')
+@slepaya.message_handler(commands=['info'])
 def send_info(message):
     cid = message.chat.id
     slepaya.send_message(cid, "Сказавши мне /badvice или 'Чудной совет', " +
@@ -146,7 +146,7 @@ def send_info(message):
                          reply_markup=markup)
 
 
-@slepaya.message_handler(commands=['help'], regexp='Команды')
+@slepaya.message_handler(commands=['help'])
 def send_help(message):
     cid = message.chat.id
     txt = ("/advice (Верный совет) - Баба Нина одарит \
