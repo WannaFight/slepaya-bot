@@ -133,7 +133,7 @@ def send_generated_quote(message):
 @slepaya.message_handler(commands=['info'])
 def send_info(message):
     cid = message.chat.id
-    slepaya.send_message(cid, "Сказавши мне /badvice, " + 
+    slepaya.send_message(cid, "Сказавши мне /badvice, " +
                          "получишь мудрость чудную")
     sleep(0.5)
     slepaya.send_message(cid, "Их мне дух древний подсказывает, а я тебе пишу")
