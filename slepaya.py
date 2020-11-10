@@ -187,7 +187,7 @@ def send_notifications():
         q = random.choice(quotes)
         try:
             slepaya.send_message(c_id['chat_id'], lunar_msg)
-            slepaya.send_message(c_id, "Вот что сегодня скажу тебе")ч
+            slepaya.send_message(c_id, "Вот что сегодня скажу тебе")
             slepaya.send_message(c_id['chat_id'], q)
             print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
             send_counter += 1
