@@ -175,7 +175,7 @@ def send_notifications():
                            region_name='eu-north-1')
     table = dyndb.Table('users')
     ids = table.scan()['Items']
-    # Items = {'chat_id': 'CHAT_ID:str'}
+    send_counter = 0
 
     cur_date = datetime.now()
     solar = Solar(cur_date.year, cur_date.month, cur_date.day)
@@ -187,11 +187,15 @@ def send_notifications():
         q = random.choice(quotes)
         try:
             slepaya.send_message(c_id['chat_id'], lunar_msg)
+            slepaya.send_message(c_id, "Вот что сегодня скажу тебе")ч
             slepaya.send_message(c_id['chat_id'], q)
             print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
+            send_counter += 1
             sleep(0.09)
         except telebot.apihelper.ApiTelegramException as e:
-            print(f"LOGS: NOTIFICATIONS_EXCEPTION {e}")
+            print(f"LOGS: [NOTIFICATIONS_EXCEPTION] {e}")
+
+    print(f"LOGS :[NOTIFICATIONS] Send to {send_counter} out of {len(ids)}")
 
 
 scheduler.start()
