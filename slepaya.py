@@ -20,12 +20,18 @@ TOKEN = getenv('BOT_TOKEN', None)
 slepaya = telebot.TeleBot(TOKEN)
 
 markup = ReplyKeyboardMarkup(resize_keyboard=True)
-markup.row(KeyboardButton('/advice'),
-           KeyboardButton('/badvice'),
-           KeyboardButton('/help'))
-markup.row(KeyboardButton('/sub'),
-           KeyboardButton('/unsub'),
-           KeyboardButton('/info'))
+# markup.row(KeyboardButton('/advice'),
+#            KeyboardButton('/badvice'),
+#            KeyboardButton('/help'))
+# markup.row(KeyboardButton('/sub'),
+#            KeyboardButton('/unsub'),
+#            KeyboardButton('/info'))
+markup.row(KeyboardButton('Верный совет'),
+           KeyboardButton('Чудной совет'),
+           KeyboardButton('Команды'))
+markup.row(KeyboardButton('Подписаться'),
+           KeyboardButton('Отписаться'),
+           KeyboardButton('Инфа'))
 
 
 quotes_markof = open('quotes.csv').read()
@@ -78,6 +84,11 @@ def subscribe(message):
                              reply_markup=markup)
 
 
+@slepaya.message_handler(regexp=r'Подписаться')
+def subscribe_reg(message):
+    subscribe(message)
+
+
 @slepaya.message_handler(commands=['unsub'])
 def unsubscribe(message):
     cid = message.chat.id
@@ -108,7 +119,12 @@ def unsubscribe(message):
         # User is not subbed -> do nothing
         slepaya.send_message(cid, "А тебя еще не записывали")
         slepaya.send_message(cid, "Могу попросить мою внучку тебя записать")
-        slepaya.send_message(cid, '/sub или подписаться', reply_markup=markup)
+        slepaya.send_message(cid, "/sub (Подписаться)", reply_markup=markup)
+
+
+@slepaya.message_handler(regexp=r'Отписаться')
+def unsubscribe_reg(message):
+    unsubscribe(message)
 
 
 @slepaya.message_handler(commands=['advice'])
@@ -117,6 +133,11 @@ def send_random_quote(message):
     cid = message.chat.id
     slepaya.send_message(cid, q, reply_markup=markup)
     print(f"LOGS: [ADVICE] {cid} - {message.from_user.username}")
+
+
+@slepaya.message_handler(regexp=r'Верный совет')
+def send_random_quote_reg(message):
+    send_random_quote(message)
 
 
 @slepaya.message_handler(commands=['badvice'])
@@ -128,6 +149,11 @@ def send_generated_quote(message):
     slepaya.send_message(cid, "Так сказал дух древний, " +
                          "посетивший меня только-что", reply_markup=markup)
     print(f"LOGS: [BADVICE] {cid} - {message.from_user.username}")
+
+
+@slepaya.message_handler(regexp=r'Чудной совет')
+def send_generated_quote_reg(message):
+    send_generated_quote(message)
 
 
 @slepaya.message_handler(commands=['info'])
@@ -146,6 +172,11 @@ def send_info(message):
                          reply_markup=markup)
 
 
+@slepaya.message_handler(regexp=r'Инфа')
+def send_info_reg(message):
+    send_info(message)
+
+
 @slepaya.message_handler(commands=['help'])
 def send_help(message):
     cid = message.chat.id
@@ -161,6 +192,11 @@ def send_help(message):
     slepaya.send_message(cid, "Вот что жду от тебя услышатьь")
     sleep(0.6)
     slepaya.send_message(cid, txt)
+
+
+@slepaya.message_handler(regexp=r'Команды')
+def send_help_reg(message):
+    send_help(message)
 
 
 @slepaya.message_handler(func=lambda message: True)
