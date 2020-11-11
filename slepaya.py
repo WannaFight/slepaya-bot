@@ -237,7 +237,7 @@ def send_notifications():
             print(f"LOGS: [NOTIFICATIONS_EXCEPTION] {e}")
 
     print(f"LOGS: [NOTIFICATIONS] Send to {send_counter} " +
-          "out of {len(list(ids))}")
+          f"out of {len(list(ids))}")
 
 
 scheduler.start()
