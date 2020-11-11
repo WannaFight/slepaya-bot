@@ -133,7 +133,7 @@ def send_generated_quote(message):
 @slepaya.message_handler(commands=['info'])
 def send_info(message):
     cid = message.chat.id
-    slepaya.send_message(cid, "Сказавши мне /badvice или 'Чудной совет', " +
+    slepaya.send_message(cid, "Сказавши мне /badvice, " +
                          "получишь мудрость чудную")
     sleep(0.5)
     slepaya.send_message(cid, "Их мне дух древний подсказывает, а я тебе пишу")
@@ -177,7 +177,7 @@ def send_notifications():
                            aws_secret_access_key=AWS_SECRET,
                            region_name='eu-north-1')
     table = dyndb.Table('users')
-    ids = table.scan()['Items']
+    ids = (i['chat_id'] for i in table.scan()['Items'])
     send_counter = 0
 
     cur_date = datetime.now()
@@ -188,17 +188,20 @@ def send_notifications():
 
     for c_id in ids:
         q = random.choice(quotes)
+        mes = ['вот что', 'скажу', 'тебе', 'сегодня']
+        random.shuffle(mes)
         try:
-            slepaya.send_message(c_id['chat_id'], lunar_msg)
-            slepaya.send_message(c_id, "Вот что сегодня скажу тебе")
-            slepaya.send_message(c_id['chat_id'], q)
+            slepaya.send_message(c_id, lunar_msg)
+            slepaya.send_message(c_id, ' '.join(mes).capitalize())
+            slepaya.send_message(c_id, q)
             print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
             send_counter += 1
             sleep(0.09)
         except telebot.apihelper.ApiTelegramException as e:
             print(f"LOGS: [NOTIFICATIONS_EXCEPTION] {e}")
 
-    print(f"LOGS :[NOTIFICATIONS] Send to {send_counter} out of {len(ids)}")
+    print(f"LOGS: [NOTIFICATIONS] Send to {send_counter} " +
+          "out of {len(list(ids))}")
 
 
 scheduler.start()
