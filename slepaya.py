@@ -73,7 +73,7 @@ def subscribe(message):
         # User is not subbed
         slepaya.send_message(cid, "Что-ж, ладно, внучка моя запишет тебя")
         sleep(0.4)
-        slepaya.send_message(cid, "Каждый день в 9:33 " +
+        slepaya.send_message(cid, "Каждый день в 9:33 по часам московским" +
                                   "буду советом тебя одаривать")
 
         table.put_item(Item=item)
@@ -217,7 +217,6 @@ def send_notifications():
                            region_name='eu-north-1')
     table = dyndb.Table('users')
     ids = (i['chat_id'] for i in table.scan()['Items'])
-    send_counter = 0
 
     cur_date = datetime.now()
     solar = Solar(cur_date.year, cur_date.month, cur_date.day)
@@ -225,6 +224,7 @@ def send_notifications():
     lunar_msg = f"{random.choice(['За окном', 'На дворе', 'Сегодня'])} "
     lunar_msg += f"{lunar} {random.choice(['лунные сутки', 'лунный день'])}"
 
+    send_counter, total_counter = 0, 0
     for c_id in ids:
         q = random.choice(quotes)
         mes = ['вот что', 'скажу', 'тебе', 'сегодня']
@@ -235,12 +235,14 @@ def send_notifications():
             slepaya.send_message(c_id, q)
             print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
             send_counter += 1
-            sleep(0.09)
+            sleep(0.05)
         except telebot.apihelper.ApiTelegramException as e:
-            print(f"LOGS: [NOTIFICATIONS_EXCEPTION] {e}")
+            err_desc = e.result_json['description']
+            print(f"LOGS: [NOTIFICATIONS_EXCEPTION] {err_desc}")
+        finally:
+            total_counter += 1
 
-    print(f"LOGS: [NOTIFICATIONS] Send to {send_counter} " +
-          f"out of {len(list(ids))}")
+    print(f"LOGS: [NOTIFICATIONS_STAT] Send to {send_counter}/{total_counter}")
 
 
 scheduler.start()
