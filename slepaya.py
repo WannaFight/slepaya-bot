@@ -73,7 +73,7 @@ def subscribe(message):
         # User is not subbed
         slepaya.send_message(cid, "Что-ж, ладно, внучка моя запишет тебя")
         sleep(0.4)
-        slepaya.send_message(cid, "Каждый день в 9:33 по часам московским" +
+        slepaya.send_message(cid, "Каждый день в 9:33 по часам московским " +
                                   "буду советом тебя одаривать")
 
         table.put_item(Item=item)
