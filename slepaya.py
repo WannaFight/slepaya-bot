@@ -238,7 +238,7 @@ def send_notifications():
             sleep(0.05)
         except telebot.apihelper.ApiTelegramException as e:
             err_desc = e.result_json['description']
-            print(f"LOGS: [NOTIFICATIONS_EXCEPTION] {err_desc}")
+            print(f"LOGS: [NOTIFICATIONS_EXCEPTION] {err_desc} {c_id}")
         finally:
             total_counter += 1
 
