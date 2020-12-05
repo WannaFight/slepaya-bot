@@ -31,10 +31,10 @@ markup.row(KeyboardButton('Верный совет'),
            KeyboardButton('Команды'))
 markup.row(KeyboardButton('Подписаться'),
            KeyboardButton('Отписаться'),
-           KeyboardButton('Инфа'))
+           KeyboardButton('Справка'))
 
 
-quotes_markof = open('quotes.csv').read()
+quotes_markof = open('quotes.txt').read()
 quotes = quotes_markof.splitlines()
 
 scheduler = BackgroundScheduler()
@@ -143,7 +143,7 @@ def send_random_quote_reg(message):
 @slepaya.message_handler(commands=['badvice'])
 def send_generated_quote(message):
     cid = message.chat.id
-    # text = generate_quote('quotes.csv')
+    # text = generate_quote('quotes.txt')
     text = NewlineText(quotes_markof).make_sentence()
     if text:
         slepaya.send_message(cid, text)
@@ -175,7 +175,7 @@ def send_info(message):
                          reply_markup=markup)
 
 
-@slepaya.message_handler(regexp=r'Инфа')
+@slepaya.message_handler(regexp=r'Справка')
 def send_info_reg(message):
     send_info(message)
 
@@ -190,7 +190,7 @@ def send_help(message):
                мудростью каждый день\n"
            "/unsub (Отписаться) - Отказаться от ежедневных \
                мудростей бабы Нины\n"
-           "/info (Инфа) - Откуда мудрости /badvice духа древнего берутся\n"
+           "/info (Справка) - Откуда мудрости /badvice духа древнего берутся\n"
            "/help (Команды) - Какие услуги могу оказать тебе\n")
     slepaya.send_message(cid, "Вот что жду от тебя услышатьь")
     sleep(0.6)
