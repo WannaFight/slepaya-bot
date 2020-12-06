@@ -20,12 +20,7 @@ TOKEN = getenv('BOT_TOKEN', None)
 slepaya = telebot.TeleBot(TOKEN)
 
 markup = ReplyKeyboardMarkup(resize_keyboard=True)
-# markup.row(KeyboardButton('/advice'),
-#            KeyboardButton('/badvice'),
-#            KeyboardButton('/help'))
-# markup.row(KeyboardButton('/sub'),
-#            KeyboardButton('/unsub'),
-#            KeyboardButton('/info'))
+
 markup.row(KeyboardButton('Верный совет'),
            KeyboardButton('Чудной совет'),
            KeyboardButton('Команды'))
@@ -192,7 +187,7 @@ def send_help(message):
                мудростей бабы Нины\n"
            "/info (Справка) - Откуда мудрости /badvice духа древнего берутся\n"
            "/help (Команды) - Какие услуги могу оказать тебе\n")
-    slepaya.send_message(cid, "Вот что жду от тебя услышатьь")
+    slepaya.send_message(cid, "Вот что жду от тебя услышать")
     sleep(0.6)
     slepaya.send_message(cid, txt)
 
