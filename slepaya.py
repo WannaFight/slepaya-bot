@@ -220,14 +220,23 @@ def send_notifications():
     lunar_msg += f"{lunar} {random.choice(['лунные сутки', 'лунный день'])}"
 
     send_counter, total_counter = 0, 0
+
+    long_message = """Дорогой мой подписчик, спасибо тебе, что все еще подписан 
+    на мою рассылку, кланяюсь в пол тебе. Пришла к тебе с новостью, 
+    что с сегодняшнего дня буду слать тебе приметы раз в 72 часа 
+    астрономических. \nТакже попроcили передать тебе, что полным ходом идет 
+    работа над шайтан-алгоритмом, который поможет мне придумывать приметы 
+    (это что в команде /badvise лежит)"""
     for c_id in ids:
         q = random.choice(quotes)
         mes = ['вот что', 'скажу', 'тебе', 'сегодня']
         random.shuffle(mes)
         try:
-            slepaya.send_message(c_id, lunar_msg)
-            slepaya.send_message(c_id, ' '.join(mes).capitalize())
-            slepaya.send_message(c_id, q)
+            final_msg = [lunar_msg, ' '.join(mes).capitalize(), q]
+            # slepaya.send_message(c_id, lunar_msg)
+            # slepaya.send_message(c_id, ' '.join(mes).capitalize())
+            slepaya.send_message(c_id, '\n'.join(final_msg))
+            slepaya.send_message(c_id)
             print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
             send_counter += 1
             sleep(0.05)
