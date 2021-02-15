@@ -52,12 +52,12 @@ def subscribe(message):
     cid = message.chat.id
     item = {'chat_id': str(cid)}
 
-    dyndb = boto3.resource('dynamodb',
+    dynamo_db = boto3.resource('dynamodb',
                            aws_access_key_id=AWS_KEY_ID,
                            aws_secret_access_key=AWS_SECRET,
                            region_name='eu-north-1')
 
-    table = dyndb.Table('users')
+    table = dynamo_db.Table('users')
 
     try:
         # User is subbed
@@ -68,7 +68,7 @@ def subscribe(message):
         # User is not subbed
         slepaya.send_message(cid, "Что-ж, ладно, внучка моя запишет тебя")
         sleep(0.4)
-        slepaya.send_message(cid, "Каждый день в 9:33 по часам московским " +
+        slepaya.send_message(cid, "Раз в 3 дня в 9:33 по часам московским " +
                                   "буду советом тебя одаривать")
 
         table.put_item(Item=item)
@@ -90,14 +90,14 @@ def unsubscribe(message):
     name = message.from_user.first_name
     item = {'chat_id': str(cid)}
 
-    dyndb = boto3.resource('dynamodb',
-                           aws_access_key_id=AWS_KEY_ID,
-                           aws_secret_access_key=AWS_SECRET,
-                           region_name='eu-north-1')
-    table = dyndb.Table('users')
+    dynamo_db = boto3.resource('dynamodb',
+                               aws_access_key_id=AWS_KEY_ID,
+                               aws_secret_access_key=AWS_SECRET,
+                               region_name='eu-north-1')
+    table = dynamo_db.Table('users')
 
     try:
-        # User is subbed -> unsub
+        # User is subbed -> unsubscribe
         table.get_item(Key=item)['Item']
 
         slepaya.send_message(cid, f"Ох, ох, {name}, что-ж делать-то...")
@@ -182,9 +182,9 @@ def send_help(message):
                 Вас мудростью случайной\n"
            "/badvice (Чудной совет) - Святой Дух посетит бабу Нину\n"
            "/sub (Подписаться) - Баба Нина будет одаривать Вас \
-               мудростью каждый день\n"
-           "/unsub (Отписаться) - Отказаться от ежедневных \
-               мудростей бабы Нины\n"
+               мудростью каждый третий день\n"
+           "/unsub (Отписаться) - Отказаться от мудростей \
+               бабы Нины каждые 3 дня\n"
            "/info (Справка) - Откуда мудрости /badvice духа древнего берутся\n"
            "/help (Команды) - Какие услуги могу оказать тебе\n")
     slepaya.send_message(cid, "Вот что жду от тебя услышать")
@@ -206,11 +206,11 @@ def reply_to_others(message):
 @scheduler.scheduled_job("interval", start_date='2020-11-7 06:33:00',
                          hours=24, id='notifications')
 def send_notifications():
-    dyndb = boto3.resource('dynamodb',
-                           aws_access_key_id=AWS_KEY_ID,
-                           aws_secret_access_key=AWS_SECRET,
-                           region_name='eu-north-1')
-    table = dyndb.Table('users')
+    dynamo_db = boto3.resource('dynamodb',
+                               aws_access_key_id=AWS_KEY_ID,
+                               aws_secret_access_key=AWS_SECRET,
+                               region_name='eu-north-1')
+    table = dynamo_db.Table('users')
     ids = (i['chat_id'] for i in table.scan()['Items'])
 
     cur_date = datetime.now()
@@ -221,28 +221,33 @@ def send_notifications():
 
     send_counter, total_counter = 0, 0
 
-    long_message = """Дорогой мой подписчик, спасибо тебе, что все еще подписан 
-    на мою рассылку, кланяюсь в пол тебе. Пришла к тебе с новостью, 
-    что с сегодняшнего дня буду слать тебе приметы раз в 72 часа 
-    астрономических. \nТакже попроcили передать тебе, что полным ходом идет 
+    info_message = """Дорогой мой подписчик, \nспасибо тебе, что все 
+    еще подписан на мою рассылку, кланяюсь в пол! Пришла к тебе с новостью, 
+    что с сегодняшнего дня приметы мом будут доходить до тебя 
+    **одним сообщением** и **раз в 72 часа** астрономических. 
+    \nТакже попросили передать тебе, что полным ходом идет 
     работа над шайтан-алгоритмом, который поможет мне придумывать приметы 
-    (это что в команде /badvise лежит)"""
+    (это что по команде /badvise тебе шлю)."""
+
     for c_id in ids:
         q = random.choice(quotes)
         mes = ['вот что', 'скажу', 'тебе', 'сегодня']
         random.shuffle(mes)
+
         try:
             final_msg = [lunar_msg, ' '.join(mes).capitalize(), q]
             # slepaya.send_message(c_id, lunar_msg)
             # slepaya.send_message(c_id, ' '.join(mes).capitalize())
             slepaya.send_message(c_id, '\n'.join(final_msg))
-            slepaya.send_message(c_id)
+            slepaya.send_message(c_id, info_message)
             print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
             send_counter += 1
             sleep(0.05)
+
         except telebot.apihelper.ApiTelegramException as e:
             err_desc = e.result_json['description']
             print(f"LOGS: [NOTIFICATIONS_EXCEPTION] {err_desc} {c_id}")
+
         finally:
             total_counter += 1
 
