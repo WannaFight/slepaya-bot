@@ -203,8 +203,8 @@ def reply_to_others(message):
                      reply_markup=markup)
 
 
-@scheduler.scheduled_job("interval", start_date='2020-11-7 06:33:00',
-                         hours=24, id='notifications')
+@scheduler.scheduled_job("interval", start_date='2021-2-16 06:33:00',
+                         hours=72, id='notifications')
 def send_notifications():
     dynamo_db = boto3.resource('dynamodb',
                                aws_access_key_id=AWS_KEY_ID,
@@ -221,14 +221,6 @@ def send_notifications():
 
     send_counter, total_counter = 0, 0
 
-    info_message = """Дорогой мой подписчик, \nспасибо тебе, что все 
-    еще подписан на мою рассылку, кланяюсь в пол! Пришла к тебе с новостью, 
-    что с сегодняшнего дня приметы мом будут доходить до тебя 
-    **одним сообщением** и **раз в 72 часа** астрономических. 
-    \nТакже попросили передать тебе, что полным ходом идет 
-    работа над шайтан-алгоритмом, который поможет мне придумывать приметы 
-    (это что по команде /badvise тебе шлю)."""
-
     for c_id in ids:
         q = random.choice(quotes)
         mes = ['вот что', 'скажу', 'тебе', 'сегодня']
@@ -239,7 +231,6 @@ def send_notifications():
             # slepaya.send_message(c_id, lunar_msg)
             # slepaya.send_message(c_id, ' '.join(mes).capitalize())
             slepaya.send_message(c_id, '\n'.join(final_msg))
-            slepaya.send_message(c_id, info_message)
             print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
             send_counter += 1
             sleep(0.05)
