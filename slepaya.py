@@ -178,15 +178,13 @@ def send_info_reg(message):
 @slepaya.message_handler(commands=['help'])
 def send_help(message):
     cid = message.chat.id
-    txt = ("/advice (Верный совет) - Баба Нина одарит \
-                Вас мудростью случайной\n"
-           "/badvice (Чудной совет) - Святой Дух посетит бабу Нину\n"
-           "/sub (Подписаться) - Баба Нина будет одаривать Вас \
-               мудростью каждый третий день\n"
-           "/unsub (Отписаться) - Отказаться от мудростей \
-               бабы Нины каждые 3 дня\n"
-           "/info (Справка) - Откуда мудрости /badvice духа древнего берутся\n"
-           "/help (Команды) - Какие услуги могу оказать тебе\n")
+    txt = """/advice (Верный совет) - Баба Нина одарит Вас мудростью случайной
+    /badvice (Чудной совет) - Святой Дух посетит бабу Нину
+    /sub (Подписаться) - Баба Нина будет одаривать Вас мудростью каждый третий день
+    /unsub (Отписаться) - Отказаться от мудростей бабы Нины каждые 3 дня
+    /info (Справка) - Откуда мудрости /badvice духа древнего берутся
+    /help (Команды) - Какие услуги могу оказать тебе
+    """
     slepaya.send_message(cid, "Вот что жду от тебя услышать")
     sleep(0.6)
     slepaya.send_message(cid, txt)
@@ -227,10 +225,8 @@ def send_notifications():
         random.shuffle(mes)
 
         try:
-            final_msg = [lunar_msg, ' '.join(mes).capitalize(), q]
-            # slepaya.send_message(c_id, lunar_msg)
-            # slepaya.send_message(c_id, ' '.join(mes).capitalize())
-            slepaya.send_message(c_id, '\n'.join(final_msg))
+            final_msg = f"""{lunar_msg}\n{' '.join(mes).capitalize()}\n{q}"""
+            slepaya.send_message(c_id, final_msg)
             print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
             send_counter += 1
             sleep(0.05)
