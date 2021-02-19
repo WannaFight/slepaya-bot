@@ -124,9 +124,9 @@ def unsubscribe_reg(message):
 
 @slepaya.message_handler(commands=['advice'])
 def send_random_quote(message):
-    q = random.choice(quotes)
+    quote = random.choice(quotes)
     cid = message.chat.id
-    slepaya.send_message(cid, q, reply_markup=markup)
+    slepaya.send_message(cid, quote, reply_markup=markup)
     print(f"LOGS: [ADVICE] {cid} - {message.from_user.username}")
 
 
@@ -211,21 +211,26 @@ def send_notifications():
     table = dynamo_db.Table('users')
     ids = (i['chat_id'] for i in table.scan()['Items'])
 
+    # Forming lunar day message
     cur_date = datetime.now()
     solar = Solar(cur_date.year, cur_date.month, cur_date.day)
     lunar = Converter.Solar2Lunar(solar).day
     lunar_msg = f"{random.choice(['За окном', 'На дворе', 'Сегодня'])} "
     lunar_msg += f"{lunar} {random.choice(['лунные сутки', 'лунный день'])}"
+    
+    # Forming 2nd message
+    mes = ['вот что', 'скажу', 'тебе', 'сегодня']
+    random.shuffle(mes)
+    mes = ' '.join(mes).capitalize()
 
     send_counter, total_counter = 0, 0
 
     for c_id in ids:
-        q = random.choice(quotes)
-        mes = ['вот что', 'скажу', 'тебе', 'сегодня']
-        random.shuffle(mes)
+        # Picking random quote for each user
+        quote = random.choice(quotes)
 
         try:
-            final_msg = f"""{lunar_msg}\n{' '.join(mes).capitalize()}\n{q}"""
+            final_msg = f"""{lunar_msg}\n\n{mes}\n\n{quote}"""
             slepaya.send_message(c_id, final_msg)
             print(f"LOGS: [NOTIFICATIONS] send_notifications to {c_id}")
             send_counter += 1
