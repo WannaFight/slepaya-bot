@@ -1,5 +1,6 @@
 # Default libraries
 from datetime import datetime
+from math import ceil
 from os import getenv
 import random
 from time import sleep
@@ -7,7 +8,8 @@ from time import sleep
 # Third party libraries
 from apscheduler.schedulers.background import BackgroundScheduler
 import boto3
-from lunarcalendar import Solar, Converter
+# from lunarcalendar import Solar, Converter
+from pylunar import MoonInfo
 from markovify import NewlineText
 import telebot
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
@@ -16,6 +18,18 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 AWS_KEY_ID = getenv('AWS_KEY_ID', None)
 AWS_SECRET = getenv('AWS_SECRET', None)
 TOKEN = getenv('BOT_TOKEN', None)
+
+MOSCOW_LOCATION = ((55, 45, 21), (-37, 37, 2))
+MOON_PHASE_TEXT_EMOJI = {
+    'NEW_MOON': ('новолуние', '🌑'),
+    'WAXING_CRESCENT': ('молодая луна', '🌒'),
+    'FIRST_QUARTER': ('первая четверть', '🌓'),
+    'WAXING_GIBBOUS': ('прибывающая луна', '🌔'),
+    'FULL_MOON': ('полнолуние', '🌕'),
+    'WANING_GIBBOUS': ('убывающая луна', '🌖'),
+    'LAST_QUARTER': ('последняя четверть', '🌗'),
+    'WANING_CRESCENT': ('старая луна', '🌘')
+}
 
 slepaya = telebot.TeleBot(TOKEN)
 
@@ -210,14 +224,20 @@ def send_notifications():
                                region_name='eu-north-1')
     table = dynamo_db.Table('users')
     ids = (i['chat_id'] for i in table.scan()['Items'])
-
+    # TODO: delete it if pylunar is working (from reqs too)
     # Forming lunar day message
-    cur_date = datetime.now()
-    solar = Solar(cur_date.year, cur_date.month, cur_date.day)
-    lunar = Converter.Solar2Lunar(solar).day
-    lunar_msg = f"{random.choice(['За окном', 'На дворе', 'Сегодня'])} "
-    lunar_msg += f"{lunar} {random.choice(['лунные сутки', 'лунный день'])}"
-    
+    # cur_date = datetime.now()
+    # solar = Solar(cur_date.year, cur_date.month, cur_date.day)
+    # lunar = Converter.Solar2Lunar(solar).day
+    # lunar_msg = f"{random.choice(['За окном', 'На дворе', 'Сегодня'])} "
+    # lunar_msg += f"{lunar} {random.choice(['лунные сутки', 'лунный день'])}"
+
+    moon_info = MoonInfo(*MOSCOW_LOCATION)
+    moon_age, moon_phase = ceil(moon_info.age()), moon_info.phase_name()
+    lunar_msg = (f"{random.choice(['За окном', 'На дворе', 'Сегодня', 'Теперича', 'Ныне'])} "
+                f"{moon_age} {random.choice(['лунные сутки', 'лунный день'])}, "
+                f"{' '.join(MOON_PHASE_TEXT_EMOJI.get(moon_phase, ['','']))}")
+
     # Forming 2nd message
     mes = ['вот что', 'скажу', 'тебе', 'сегодня']
     random.shuffle(mes)
