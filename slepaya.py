@@ -1,14 +1,10 @@
-# Default libraries
-from datetime import datetime
 from math import ceil
 from os import getenv
 import random
 from time import sleep
 
-# Third party libraries
 from apscheduler.schedulers.background import BackgroundScheduler
 import boto3
-# from lunarcalendar import Solar, Converter
 from pylunar import MoonInfo
 from markovify import NewlineText
 import telebot
@@ -74,12 +70,12 @@ def subscribe(message):
     table = dynamo_db.Table('users')
 
     try:
-        # User is subbed
+        # User is subbed -> do nothing
         table.get_item(Key=item)['Item']
         slepaya.send_message(cid, "Моя внучка тебя уже записывала",
                              reply_markup=markup)
     except KeyError:
-        # User is not subbed
+        # User is not subbed -> add to dynamo db
         slepaya.send_message(cid, "Что-ж, ладно, внучка моя запишет тебя")
         sleep(0.4)
         slepaya.send_message(cid, "Раз в 3 дня в 9:33 по часам московским " +
@@ -224,14 +220,8 @@ def send_notifications():
                                region_name='eu-north-1')
     table = dynamo_db.Table('users')
     ids = (i['chat_id'] for i in table.scan()['Items'])
-    # TODO: delete it if pylunar is working (from reqs too)
+    
     # Forming lunar day message
-    # cur_date = datetime.now()
-    # solar = Solar(cur_date.year, cur_date.month, cur_date.day)
-    # lunar = Converter.Solar2Lunar(solar).day
-    # lunar_msg = f"{random.choice(['За окном', 'На дворе', 'Сегодня'])} "
-    # lunar_msg += f"{lunar} {random.choice(['лунные сутки', 'лунный день'])}"
-
     moon_info = MoonInfo(*MOSCOW_LOCATION)
     moon_age, moon_phase = ceil(moon_info.age()), moon_info.phase_name()
     lunar_msg = (f"{random.choice(['За окном', 'На дворе', 'Сегодня', 'Теперича', 'Ныне'])} "
