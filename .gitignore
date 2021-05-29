@@ -1,6 +1,7 @@
 __pycache__/**
 .ipynb_checkpoints/**
 .vscode/**
+env/*
 parse.ipynb
 cronjob.py
 b_tok.txt

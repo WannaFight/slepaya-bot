@@ -46,7 +46,7 @@ scheduler = BackgroundScheduler()
 
 
 @slepaya.message_handler(commands=['start'])
-def send_welcome(message):
+def send_welcome(message: telebot.types.Message):
     cid = message.chat.id
     print(f"LOGS: [START] {cid} - {message.from_user.username}")
     slepaya.send_message(cid, f"Здравствуй, {message.from_user.first_name}")
@@ -58,7 +58,7 @@ def send_welcome(message):
 
 
 @slepaya.message_handler(commands=['sub'])
-def subscribe(message):
+def subscribe(message: telebot.types.Message):
     cid = message.chat.id
     item = {'chat_id': str(cid)}
 
@@ -90,12 +90,12 @@ def subscribe(message):
 
 
 @slepaya.message_handler(regexp=r'Подписаться')
-def subscribe_reg(message):
+def subscribe_reg(message: telebot.types.Message):
     subscribe(message)
 
 
 @slepaya.message_handler(commands=['unsub'])
-def unsubscribe(message):
+def unsubscribe(message: telebot.types.Message):
     cid = message.chat.id
     name = message.from_user.first_name
     item = {'chat_id': str(cid)}
@@ -128,12 +128,12 @@ def unsubscribe(message):
 
 
 @slepaya.message_handler(regexp=r'Отписаться')
-def unsubscribe_reg(message):
+def unsubscribe_reg(message: telebot.types.Message):
     unsubscribe(message)
 
 
 @slepaya.message_handler(commands=['advice'])
-def send_random_quote(message):
+def send_random_quote(message: telebot.types.Message):
     quote = random.choice(quotes)
     cid = message.chat.id
     slepaya.send_message(cid, quote, reply_markup=markup)
@@ -141,12 +141,12 @@ def send_random_quote(message):
 
 
 @slepaya.message_handler(regexp=r'Верный совет')
-def send_random_quote_reg(message):
+def send_random_quote_reg(message: telebot.types.Message):
     send_random_quote(message)
 
 
 @slepaya.message_handler(commands=['badvice'])
-def send_generated_quote(message):
+def send_generated_quote(message: telebot.types.Message):
     cid = message.chat.id
     # text = generate_quote('quotes.txt')
     text = NewlineText(quotes_markof).make_sentence()
@@ -160,12 +160,12 @@ def send_generated_quote(message):
 
 
 @slepaya.message_handler(regexp=r'Чудной совет')
-def send_generated_quote_reg(message):
+def send_generated_quote_reg(message: telebot.types.Message):
     send_generated_quote(message)
 
 
 @slepaya.message_handler(commands=['info'])
-def send_info(message):
+def send_info(message: telebot.types.Message):
     cid = message.chat.id
     slepaya.send_message(cid, "Сказавши мне /badvice, " +
                          "получишь мудрость чудную")
@@ -181,12 +181,12 @@ def send_info(message):
 
 
 @slepaya.message_handler(regexp=r'Справка')
-def send_info_reg(message):
+def send_info_reg(message: telebot.types.Message):
     send_info(message)
 
 
 @slepaya.message_handler(commands=['help'])
-def send_help(message):
+def send_help(message: telebot.types.Message):
     cid = message.chat.id
     txt = """/advice (Верный совет) - Баба Нина одарит Вас мудростью случайной
     /badvice (Чудной совет) - Святой Дух посетит бабу Нину
@@ -201,14 +201,40 @@ def send_help(message):
 
 
 @slepaya.message_handler(regexp=r'Команды')
-def send_help_reg(message):
+def send_help_reg(message: telebot.types.Message):
     send_help(message)
 
 
 @slepaya.message_handler(func=lambda message: True)
-def reply_to_others(message):
+def reply_to_others(message: telebot.types.Message):
     slepaya.reply_to(message, "Ишь ты - за словом в карман не лезешь",
                      reply_markup=markup)
+
+
+@slepaya.message_handler(commands=['testnotif'])
+def test_notification(message: telebot.types.Message):
+    cid = message.chat.id
+
+    if message.from_user.username == 'cognomen':
+        # Forming lunar day message
+        moon_info = MoonInfo(*MOSCOW_LOCATION)
+        moon_age, moon_phase = ceil(moon_info.age()), moon_info.phase_name()
+        lunar_msg = (f"{random.choice(['За окном', 'На дворе', 'Сегодня', 'Теперича', 'Ныне'])} "
+                    f"{moon_age} {random.choice(['лунные сутки', 'лунный день'])}, "
+                    f"{' '.join(MOON_PHASE_TEXT_EMOJI.get(moon_phase, ['','']))}")
+
+        # Forming 2nd message
+        mes = ['вот что', 'скажу', 'тебе', 'сегодня']
+        random.shuffle(mes)
+        mes = ' '.join(mes).capitalize()
+
+        quote = random.choice(quotes)
+
+        final_msg = f"""{lunar_msg}\n\n{mes}\n\n{quote}"""
+        slepaya.send_message(cid, final_msg)
+        
+    else:
+        slepaya.send_message(cid, text="Куда лезешь?? Туда тебе нельзя")
 
 
 @scheduler.scheduled_job("interval", start_date='2021-2-16 06:33:00',
