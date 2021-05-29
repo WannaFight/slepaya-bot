@@ -205,12 +205,6 @@ def send_help_reg(message: telebot.types.Message):
     send_help(message)
 
 
-@slepaya.message_handler(func=lambda message: True)
-def reply_to_others(message: telebot.types.Message):
-    slepaya.reply_to(message, "Ишь ты - за словом в карман не лезешь",
-                     reply_markup=markup)
-
-
 @slepaya.message_handler(commands=['testnotif'])
 def test_notification(message: telebot.types.Message):
     cid = message.chat.id
@@ -232,9 +226,15 @@ def test_notification(message: telebot.types.Message):
 
         final_msg = f"""{lunar_msg}\n\n{mes}\n\n{quote}"""
         slepaya.send_message(cid, final_msg)
-        
+
     else:
         slepaya.send_message(cid, text="Куда лезешь?? Туда тебе нельзя")
+
+
+@slepaya.message_handler(func=lambda message: True)
+def reply_to_others(message: telebot.types.Message):
+    slepaya.reply_to(message, "Ишь ты - за словом в карман не лезешь",
+                     reply_markup=markup)
 
 
 @scheduler.scheduled_job("interval", start_date='2021-2-16 06:33:00',
