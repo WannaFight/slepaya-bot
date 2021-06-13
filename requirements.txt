@@ -3,3 +3,5 @@ boto3==1.16.12
 APScheduler==3.6.3
 pyTelegramBotAPI==3.7.3
 pylunar==0.6.0
+fuzzywuzzy==0.18.0
+python-Levenshtein==0.12.2

@@ -5,15 +5,21 @@ from time import sleep
 
 from apscheduler.schedulers.background import BackgroundScheduler
 import boto3
+from botocore.exceptions import (
+    ConnectTimeoutError, ConnectionClosedError, 
+    ConnectionError, NoCredentialsError, NoCredentialsError)
 from pylunar import MoonInfo
 from markovify import NewlineText
-import telebot
-from telebot.types import ReplyKeyboardMarkup, KeyboardButton
+from telebot import TeleBot, apihelper
+from telebot.types import KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
+
+from typing import List
+from utils import searcher, ending_decider
 
 
 AWS_KEY_ID = getenv('AWS_KEY_ID', None)
 AWS_SECRET = getenv('AWS_SECRET', None)
-TOKEN = getenv('BOT_TOKEN', None)
+TOKEN = getenv('BOT_TOKEN', getenv('LAYER_BOT_TOKEN'))
 
 MOSCOW_LOCATION = ((55, 45, 21), (-37, 37, 2))
 MOON_PHASE_TEXT_EMOJI = {
@@ -27,17 +33,28 @@ MOON_PHASE_TEXT_EMOJI = {
     'WANING_CRESCENT': ('старая луна', '🌘')
 }
 
-slepaya = telebot.TeleBot(TOKEN)
+COMMANDS_MESSAGE = ("/advice (Верный совет) - Баба Нина одарит Вас мудростью случайной\n"
+                    "/badvice (Чудной совет) - Святой Дух посетит бабу Нину\n"
+                    "/sub (Подписаться) - Баба Нина будет одаривать Вас мудростью каждый третий день\n"
+                    "/unsub (Отписаться) - Отказаться от мудростей бабы Нины каждые 3 дня\n"
+                    "/info (Справка) - Откуда мудрости /badvice духа древнего берутся\n"
+                    "/help (Команды) - Какие услуги могу оказать тебе\n"
+                    "/search (Поиск) - Поиск по приметам")
 
-markup = ReplyKeyboardMarkup(resize_keyboard=True)
+MAIN_MARKUP = ReplyKeyboardMarkup(resize_keyboard=True)
+MAIN_MARKUP.row(KeyboardButton('Верный совет'),
+                KeyboardButton('Чудной совет'),
+                KeyboardButton('Команды'))
+MAIN_MARKUP.row(KeyboardButton('Подписаться'),
+                KeyboardButton('Отписаться'),
+                KeyboardButton('Справка'),
+                KeyboardButton('Поиск'))
 
-markup.row(KeyboardButton('Верный совет'),
-           KeyboardButton('Чудной совет'),
-           KeyboardButton('Команды'))
-markup.row(KeyboardButton('Подписаться'),
-           KeyboardButton('Отписаться'),
-           KeyboardButton('Справка'))
+FOUND_QUOTES_MARKUP = ReplyKeyboardMarkup(resize_keyboard=True)
+FOUND_QUOTES_MARKUP.row(KeyboardButton("Расскажи еще примету"),
+                        KeyboardButton("Достаточно"))
 
+slepaya = TeleBot(TOKEN)
 
 quotes_markof = open('quotes.txt').read()
 quotes = quotes_markof.splitlines()
@@ -46,26 +63,23 @@ scheduler = BackgroundScheduler()
 
 
 @slepaya.message_handler(commands=['start'])
-def send_welcome(message: telebot.types.Message):
+def send_welcome(message: Message):
     cid = message.chat.id
-    print(f"LOGS: [START] {cid} - {message.from_user.username}")
+    print(f"LOGS: [START] {cid}({message.from_user.username})")
     slepaya.send_message(cid, f"Здравствуй, {message.from_user.first_name}")
     sleep(0.5)
     slepaya.send_message(cid, "Ничего не говори, знаю")
     sleep(0.6)
     slepaya.send_message(cid, "За советом тебя ко мне отправили",
-                         reply_markup=markup)
+                         reply_markup=MAIN_MARKUP)
 
 
 @slepaya.message_handler(commands=['sub'])
-def subscribe(message: telebot.types.Message):
+def subscribe(message: Message):
     cid = message.chat.id
     item = {'chat_id': str(cid)}
-
-    dynamo_db = boto3.resource('dynamodb',
-                           aws_access_key_id=AWS_KEY_ID,
-                           aws_secret_access_key=AWS_SECRET,
-                           region_name='eu-north-1')
+    dynamo_db = boto3.resource('dynamodb', aws_access_key_id=AWS_KEY_ID,
+                               aws_secret_access_key=AWS_SECRET, region_name='eu-north-1')
 
     table = dynamo_db.Table('users')
 
@@ -73,7 +87,7 @@ def subscribe(message: telebot.types.Message):
         # User is subbed -> do nothing
         table.get_item(Key=item)['Item']
         slepaya.send_message(cid, "Моя внучка тебя уже записывала",
-                             reply_markup=markup)
+                             reply_markup=MAIN_MARKUP)
     except KeyError:
         # User is not subbed -> add to dynamo db
         slepaya.send_message(cid, "Что-ж, ладно, внучка моя запишет тебя")
@@ -82,28 +96,29 @@ def subscribe(message: telebot.types.Message):
                                   "буду советом тебя одаривать")
 
         table.put_item(Item=item)
-        print(f"LOGS: [SUB] {cid} - {message.from_user.username}")
+        print(f"LOGS: [SUB] {cid}({message.from_user.username})")
 
         slepaya.send_message(cid, "Ну все, ступай с миром")
         slepaya.send_message(cid, "Советом тебя не обделю",
-                             reply_markup=markup)
+                             reply_markup=MAIN_MARKUP)
+    except (ConnectTimeoutError, ConnectionClosedError, ConnectionError, NoCredentialsError, NoCredentialsError):
+        slepaya.send_message(cid, "Ой-ой-ой, что-то не могу найти тетрадку со своими подписчиками")
 
 
 @slepaya.message_handler(regexp=r'Подписаться')
-def subscribe_reg(message: telebot.types.Message):
+def subscribe_reg(message: Message):
     subscribe(message)
 
 
 @slepaya.message_handler(commands=['unsub'])
-def unsubscribe(message: telebot.types.Message):
+def unsubscribe(message: Message):
     cid = message.chat.id
     name = message.from_user.first_name
     item = {'chat_id': str(cid)}
-
-    dynamo_db = boto3.resource('dynamodb',
-                               aws_access_key_id=AWS_KEY_ID,
-                               aws_secret_access_key=AWS_SECRET,
-                               region_name='eu-north-1')
+    
+    dynamo_db = boto3.resource('dynamodb', aws_access_key_id=AWS_KEY_ID,
+                               aws_secret_access_key=AWS_SECRET, region_name='eu-north-1')
+    
     table = dynamo_db.Table('users')
 
     try:
@@ -115,57 +130,60 @@ def unsubscribe(message: telebot.types.Message):
         slepaya.send_message(cid, "Ладно, сейчас попрошу внучку " +
                              "тебя убрать из списка")
         table.delete_item(Key=item)
-        print(f"LOGS: [UNSUB] {cid} - {message.from_user.username}")
+        print(f"LOGS: [UNSUB] {cid}({message.from_user.username})")
         sleep(0.9)
         slepaya.send_message(cid, "Внучка выписала тебя из тетрадки")
         slepaya.send_message(cid, "Помни одно - ты всегда ко мне " +
-                             "можешь обратиться", reply_markup=markup)
+                             "можешь обратиться", reply_markup=MAIN_MARKUP)
     except KeyError:
         # User is not subbed -> do nothing
         slepaya.send_message(cid, "А тебя еще не записывали")
         slepaya.send_message(cid, "Могу попросить мою внучку тебя записать")
-        slepaya.send_message(cid, "/sub (Подписаться)", reply_markup=markup)
+        slepaya.send_message(cid, "/sub (Подписаться)", reply_markup=MAIN_MARKUP)
+    except (ConnectTimeoutError, ConnectionClosedError, ConnectionError, NoCredentialsError, NoCredentialsError):
+        slepaya.send_message(cid, "Ой-ой-ой, что-то не могу найти тетрадку со своими подписчиками")
+
 
 
 @slepaya.message_handler(regexp=r'Отписаться')
-def unsubscribe_reg(message: telebot.types.Message):
+def unsubscribe_reg(message: Message):
     unsubscribe(message)
 
 
 @slepaya.message_handler(commands=['advice'])
-def send_random_quote(message: telebot.types.Message):
+def send_random_quote(message: Message):
     quote = random.choice(quotes)
     cid = message.chat.id
-    slepaya.send_message(cid, quote, reply_markup=markup)
-    print(f"LOGS: [ADVICE] {cid} - {message.from_user.username}")
+    slepaya.send_message(cid, quote, reply_markup=MAIN_MARKUP)
+    print(f"LOGS: [ADVICE] {cid}({message.from_user.username})")
 
 
 @slepaya.message_handler(regexp=r'Верный совет')
-def send_random_quote_reg(message: telebot.types.Message):
+def send_random_quote_reg(message: Message):
     send_random_quote(message)
 
 
 @slepaya.message_handler(commands=['badvice'])
-def send_generated_quote(message: telebot.types.Message):
+def send_generated_quote(message: Message):
     cid = message.chat.id
     # text = generate_quote('quotes.txt')
     text = NewlineText(quotes_markof).make_sentence()
     if text:
         slepaya.send_message(cid, text)
         slepaya.send_message(cid, "Так сказал дух древний, " +
-                             "посетивший меня только что", reply_markup=markup)
+                             "посетивший меня только что", reply_markup=MAIN_MARKUP)
     else:
-        slepaya.send_message(cid, "Дух древний промолчал", reply_markup=markup)
-    print(f"LOGS: [BADVICE] {cid} - {message.from_user.username}")
+        slepaya.send_message(cid, "Дух древний промолчал", reply_markup=MAIN_MARKUP)
+    print(f"LOGS: [BADVICE] {cid}({message.from_user.username})")
 
 
 @slepaya.message_handler(regexp=r'Чудной совет')
-def send_generated_quote_reg(message: telebot.types.Message):
+def send_generated_quote_reg(message: Message):
     send_generated_quote(message)
 
 
 @slepaya.message_handler(commands=['info'])
-def send_info(message: telebot.types.Message):
+def send_info(message: Message):
     cid = message.chat.id
     slepaya.send_message(cid, "Сказавши мне /badvice, " +
                          "получишь мудрость чудную")
@@ -177,36 +195,29 @@ def send_info(message: telebot.types.Message):
     sleep(0.6)
     slepaya.send_message(cid, "А что это за зверь такой, Марковские цепи, " +
                          "можно в ваших Интернетах посмотреть",
-                         reply_markup=markup)
+                         reply_markup=MAIN_MARKUP)
 
 
 @slepaya.message_handler(regexp=r'Справка')
-def send_info_reg(message: telebot.types.Message):
+def send_info_reg(message: Message):
     send_info(message)
 
 
 @slepaya.message_handler(commands=['help'])
-def send_help(message: telebot.types.Message):
+def send_help(message: Message):
     cid = message.chat.id
-    txt = """/advice (Верный совет) - Баба Нина одарит Вас мудростью случайной
-    /badvice (Чудной совет) - Святой Дух посетит бабу Нину
-    /sub (Подписаться) - Баба Нина будет одаривать Вас мудростью каждый третий день
-    /unsub (Отписаться) - Отказаться от мудростей бабы Нины каждые 3 дня
-    /info (Справка) - Откуда мудрости /badvice духа древнего берутся
-    /help (Команды) - Какие услуги могу оказать тебе
-    """
     slepaya.send_message(cid, "Вот что жду от тебя услышать")
     sleep(0.6)
-    slepaya.send_message(cid, txt)
+    slepaya.send_message(cid, COMMANDS_MESSAGE)
 
 
 @slepaya.message_handler(regexp=r'Команды')
-def send_help_reg(message: telebot.types.Message):
+def send_help_reg(message: Message):
     send_help(message)
 
 
 @slepaya.message_handler(commands=['testnotif'])
-def test_notification(message: telebot.types.Message):
+def test_notification(message: Message):
     cid = message.chat.id
 
     if message.from_user.username == 'cognomen':
@@ -231,10 +242,75 @@ def test_notification(message: telebot.types.Message):
         slepaya.send_message(cid, text="Куда лезешь?? Туда тебе нельзя")
 
 
+@slepaya.message_handler(commands=['search'])
+def start_search(message: Message):
+    serch_markup = ReplyKeyboardMarkup(resize_keyboard=True,
+                                       one_time_keyboard=True)
+    serch_markup.add('Отмена')
+    msg = slepaya.send_message(message.chat.id, "Напиши мне поисковый запрос...",
+                               reply_markup=serch_markup)
+    slepaya.register_next_step_handler(msg, search_procedure)
+
+
+@slepaya.message_handler(regexp=r'Поиск')
+def start_search_reg(message: Message):
+    start_search(message)
+
+
+def search_procedure(message: Message):
+    cid = message.chat.id
+    
+    if message.text == 'Отмена':
+        slepaya.send_message(cid, 'Ну на нет и суда нет', reply_markup=MAIN_MARKUP)
+        return
+    
+    slepaya.reply_to(message, "Ищу в письменах моих по этому запросу, подожди")
+    print(f"LOGS: [SEARCH] {cid}({message.from_user.username}): {message.text}")
+    indices = searcher(message.text, quotes, cutoff=90)
+
+    if (l := len(indices)):
+        if l == 1:
+            slepaya.send_message(cid, "Нашлась всего 1 примета")
+            sleep(0.5)
+            slepaya.send_message(cid, quotes[indices[0]],
+                                 reply_markup=MAIN_MARKUP)
+            return
+        else:
+            random.shuffle(indices)
+            last_index = indices.pop()
+            slepaya.send_message(cid, quotes[last_index])
+            sleep(0.5)
+            msg = slepaya.send_message(cid, f"Нашла еще {l-1} {ending_decider(l, 'примет')}",
+                                       reply_markup=FOUND_QUOTES_MARKUP)
+            slepaya.register_next_step_handler(msg, send_other_found_quotes, indices)
+            return
+    else:
+        slepaya.send_message(cid, "Такого мудреного слова нет в моих мудростях",
+                             reply_markup=MAIN_MARKUP)
+        return
+
+
+def send_other_found_quotes(message: Message, indices: List[int]):
+    cid = message.chat.id
+    
+    if not indices:
+        slepaya.send_message(cid, "А примет больше не осталось",
+                             reply_markup=MAIN_MARKUP)
+        return
+    if message.text == 'Достаточно':
+        slepaya.send_message(cid, "Хорошо", reply_markup=MAIN_MARKUP)
+        return
+    elif message.text == 'Расскажи еще примету':
+        msg = slepaya.send_message(cid, quotes[indices[0]],
+                                   reply_markup=FOUND_QUOTES_MARKUP)
+        slepaya.register_next_step_handler(msg, send_other_found_quotes, indices[1:])
+        return
+
+
 @slepaya.message_handler(func=lambda message: True)
-def reply_to_others(message: telebot.types.Message):
+def reply_to_others(message: Message):
     slepaya.reply_to(message, "Ишь ты - за словом в карман не лезешь",
-                     reply_markup=markup)
+                     reply_markup=MAIN_MARKUP)
 
 
 @scheduler.scheduled_job("interval", start_date='2021-2-16 06:33:00',
@@ -272,7 +348,7 @@ def send_notifications():
             send_counter += 1
             sleep(0.05)
 
-        except telebot.apihelper.ApiTelegramException as e:
+        except apihelper.ApiTelegramException as e:
             err_desc = e.result_json['description']
             print(f"LOGS: [NOTIFICATIONS_EXCEPTION] {err_desc} {c_id}")
 
@@ -283,4 +359,7 @@ def send_notifications():
 
 
 scheduler.start()
+
+slepaya.enable_save_next_step_handlers(delay=2)
+slepaya.load_next_step_handlers
 slepaya.polling(none_stop=True)

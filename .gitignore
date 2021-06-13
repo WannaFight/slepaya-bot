@@ -2,6 +2,7 @@ __pycache__/**
 .ipynb_checkpoints/**
 .vscode/**
 env/*
+.handler-saves/*
 parse.ipynb
 cronjob.py
 b_tok.txt
