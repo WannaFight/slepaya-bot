@@ -42,10 +42,10 @@ COMMANDS_MESSAGE = ("/advice (Верный совет) - Баба Нина од�
                     "/search (Поиск) - Поиск по приметам")
 
 MAIN_MARKUP = ReplyKeyboardMarkup(resize_keyboard=True)
-MAIN_MARKUP.row(KeyboardButton('Верный совет'),
-                KeyboardButton('Чудной совет'),
-                KeyboardButton('Команды'))
-MAIN_MARKUP.row(KeyboardButton('Подписаться'),
+MAIN_MARKUP.row(KeyboardButton('Верный совет 🔀'),
+                KeyboardButton('Чудной совет 🎲'),
+                KeyboardButton('Команды 📄'))
+MAIN_MARKUP.row(KeyboardButton('Подписаться '),
                 KeyboardButton('Отписаться'),
                 KeyboardButton('Справка'),
                 KeyboardButton('Поиск'))
@@ -268,8 +268,8 @@ def search_procedure(message: Message):
     print(f"LOGS: [SEARCH] {cid}({message.from_user.username}): {message.text}")
     indices = searcher(message.text, quotes, cutoff=90)
 
-    if (l := len(indices)):
-        if l == 1:
+    if indices:
+        if len(indices) == 1:
             slepaya.send_message(cid, "Нашлась всего 1 примета")
             sleep(0.5)
             slepaya.send_message(cid, quotes[indices[0]],
