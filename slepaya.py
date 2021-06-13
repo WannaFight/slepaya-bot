@@ -269,7 +269,8 @@ def search_procedure(message: Message):
     indices = searcher(message.text, quotes, cutoff=90)
 
     if indices:
-        if len(indices) == 1:
+        l = len(indices)
+        if l == 1:
             slepaya.send_message(cid, "Нашлась всего 1 примета")
             sleep(0.5)
             slepaya.send_message(cid, quotes[indices[0]],
