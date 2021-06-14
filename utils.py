@@ -77,9 +77,8 @@ class QuotesModel:
 
         return ' '.join(self.idx2word(idx) for idx in word_idxs)
 
-    def translate_generated(self, folder_id: str = os.getenv('FOLDER_ID', "b1geh42nvb0dfevai47f"),
-                            texts: list = [], targetLanguageCode: str = "ru",
-                            t=0.75, words=8) -> str:
+    def translate_generated(self, t: float, words: int, folder_id: str = os.getenv('FOLDER_ID', "b1geh42nvb0dfevai47f"),
+                            texts: list = [], targetLanguageCode: str = "ru") -> str:
         body = {
             "folder_id": folder_id,
             "texts": texts if texts
