@@ -293,10 +293,10 @@ def send_other_found_quotes(message: Message, indices: List[int]):
         slepaya.send_message(cid, "А примет больше не осталось",
                              reply_markup=MAIN_MARKUP)
         return
-    if message.text.startwith("Достаточно"):
+    if message.text.startswith("Достаточно"):
         slepaya.send_message(cid, "Хорошо", reply_markup=MAIN_MARKUP)
         return
-    elif message.text.startwith('Еще примету'):
+    elif message.text.startswith('Еще примету'):
         msg = slepaya.send_message(cid, quotes[indices[0]],
                                    reply_markup=FOUND_QUOTES_MARKUP)
         slepaya.register_next_step_handler(msg, send_other_found_quotes, indices[1:])
