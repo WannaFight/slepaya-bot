@@ -45,10 +45,10 @@ MAIN_MARKUP = ReplyKeyboardMarkup(resize_keyboard=True)
 MAIN_MARKUP.row(KeyboardButton('Верный совет 🔀'),
                 KeyboardButton('Чудной совет 🎲'),
                 KeyboardButton('Команды 📄'))
-MAIN_MARKUP.row(KeyboardButton('Подписаться '),
-                KeyboardButton('Отписаться'),
-                KeyboardButton('Справка'),
-                KeyboardButton('Поиск'))
+MAIN_MARKUP.row(KeyboardButton('Подписка 📥'),
+                KeyboardButton('Отписка 📤'),
+                KeyboardButton('Справка ℹ️'),
+                KeyboardButton('Поиск 🔍'))
 
 FOUND_QUOTES_MARKUP = ReplyKeyboardMarkup(resize_keyboard=True)
 FOUND_QUOTES_MARKUP.row(KeyboardButton("Расскажи еще примету"),
@@ -105,7 +105,7 @@ def subscribe(message: Message):
         slepaya.send_message(cid, "Ой-ой-ой, что-то не могу найти тетрадку со своими подписчиками")
 
 
-@slepaya.message_handler(regexp=r'Подписаться')
+@slepaya.message_handler(regexp=r'Подписка')
 def subscribe_reg(message: Message):
     subscribe(message)
 
@@ -145,7 +145,7 @@ def unsubscribe(message: Message):
 
 
 
-@slepaya.message_handler(regexp=r'Отписаться')
+@slepaya.message_handler(regexp=r'Отписка')
 def unsubscribe_reg(message: Message):
     unsubscribe(message)
 

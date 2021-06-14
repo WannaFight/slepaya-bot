@@ -15,7 +15,7 @@ def searcher(q: str, full_text: List[str], cutoff=85) -> List[str]:
     quotes_indices = []
     for i, sent in enumerate(full_text):
         try:
-            if process.extractBests(q, filter(lambda x: len(q)/len(x) < 1.5 and len(x) > 1, sent.split()),
+            if process.extractBests(q, filter(lambda x: abs(len(q)-len(x)) < 2 and len(x) > 2, sent.split()),
                                     score_cutoff=cutoff, scorer=custom_ratio):
                 quotes_indices.append(i)
         except IndexError:
