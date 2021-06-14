@@ -5,3 +5,5 @@ pyTelegramBotAPI==3.7.3
 pylunar==0.6.0
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.12.2
+tensorflow-cpu==2.5.0
+gensim==4.0.1

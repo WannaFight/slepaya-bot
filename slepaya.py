@@ -11,10 +11,10 @@ from botocore.exceptions import (
 from pylunar import MoonInfo
 from markovify import NewlineText
 from telebot import TeleBot, apihelper
-from telebot.types import KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telebot.types import KeyboardButton, Message, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
 from typing import List
-from utils import searcher, ending_decider
+from utils import searcher, ending_decider, QuotesModel
 
 
 AWS_KEY_ID = getenv('AWS_KEY_ID', None)
@@ -33,26 +33,29 @@ MOON_PHASE_TEXT_EMOJI = {
     'WANING_CRESCENT': ('старая луна', '🌘')
 }
 
-COMMANDS_MESSAGE = ("/advice (Верный совет) - Баба Нина одарит Вас мудростью случайной\n"
-                    "/badvice (Чудной совет) - Святой Дух посетит бабу Нину\n"
-                    "/sub (Подписаться) - Баба Нина будет одаривать Вас мудростью каждый третий день\n"
-                    "/unsub (Отписаться) - Отказаться от мудростей бабы Нины каждые 3 дня\n"
-                    "/info (Справка) - Откуда мудрости /badvice духа древнего берутся\n"
+COMMANDS_MESSAGE = ("/advice (Случайная примета) - Баба Нина одарит Вас мудростью случайной\n"
+                    "/badvice (Сгенерировать примету) - Баба Нина придумает примету\n"
+                    "/sub (Подписка) - Баба Нина будет одаривать Вас мудростью каждый третий день\n"
+                    "/unsub (Отписка) - Отказаться от мудростей бабы Нины каждые 3 дня\n"
                     "/help (Команды) - Какие услуги могу оказать тебе\n"
                     "/search (Поиск) - Поиск по приметам")
 
+INFO_MESSAGE = ('Сказавши мне "Сгенерировать примету" (/badvice), получишь мудрость чудную ☝️\n\n'
+                'Их мне дух древний 👻 подсказывает, а я тебе пишу.\n\n'
+                'Дух говорит, что эти мудрости из нейронной сети 🧠 LSTM берет\n\n'
+                'А что это за зверь такой, LSTM, можно в ваших Интернетах 🌐 посмотреть по кнопке 👇')
+
 MAIN_MARKUP = ReplyKeyboardMarkup(resize_keyboard=True)
-MAIN_MARKUP.row(KeyboardButton('Верный совет 🔀'),
-                KeyboardButton('Чудной совет 🎲'),
-                KeyboardButton('Команды 📄'))
-MAIN_MARKUP.row(KeyboardButton('Подписка 📥'),
-                KeyboardButton('Отписка 📤'),
-                KeyboardButton('Справка ℹ️'),
+MAIN_MARKUP.row(KeyboardButton('Случайная примета 🔀'),
+                KeyboardButton('Сгенерировать примету 🎲'))
+MAIN_MARKUP.row(KeyboardButton('Команды 📄'),
                 KeyboardButton('Поиск 🔍'))
+MAIN_MARKUP.row(KeyboardButton('Подписка 📥'),
+                KeyboardButton('Отписка 📤'))
 
 FOUND_QUOTES_MARKUP = ReplyKeyboardMarkup(resize_keyboard=True)
-FOUND_QUOTES_MARKUP.row(KeyboardButton("Расскажи еще примету"),
-                        KeyboardButton("Достаточно"))
+FOUND_QUOTES_MARKUP.row(KeyboardButton("Еще примету ⏭️"),
+                        KeyboardButton("Достаточно 🛑"))
 
 slepaya = TeleBot(TOKEN)
 
@@ -61,6 +64,10 @@ quotes = quotes_markof.splitlines()
 
 scheduler = BackgroundScheduler()
 
+# Load model and generate one quote to warm it up
+model = QuotesModel()
+model.generate_next()
+print('[LOGS] Ready!')
 
 @slepaya.message_handler(commands=['start'])
 def send_welcome(message: Message):
@@ -68,9 +75,9 @@ def send_welcome(message: Message):
     print(f"LOGS: [START] {cid}({message.from_user.username})")
     slepaya.send_message(cid, f"Здравствуй, {message.from_user.first_name}")
     sleep(0.5)
-    slepaya.send_message(cid, "Ничего не говори, знаю")
+    slepaya.send_message(cid, "Ничего не говори 🤐, знаю...")
     sleep(0.6)
-    slepaya.send_message(cid, "За советом тебя ко мне отправили",
+    slepaya.send_message(cid, "За советом тебя ко мне отправили ☝️",
                          reply_markup=MAIN_MARKUP)
 
 
@@ -141,7 +148,8 @@ def unsubscribe(message: Message):
         slepaya.send_message(cid, "Могу попросить мою внучку тебя записать")
         slepaya.send_message(cid, "/sub (Подписаться)", reply_markup=MAIN_MARKUP)
     except (ConnectTimeoutError, ConnectionClosedError, ConnectionError, NoCredentialsError, NoCredentialsError):
-        slepaya.send_message(cid, "Ой-ой-ой, что-то не могу найти тетрадку со своими подписчиками")
+        slepaya.send_message(cid, "Ой-ой-ой, что-то не могу найти тетрадку со своими подписчиками",
+                             reply_markup=MAIN_MARKUP)
 
 
 
@@ -158,7 +166,7 @@ def send_random_quote(message: Message):
     print(f"LOGS: [ADVICE] {cid}({message.from_user.username})")
 
 
-@slepaya.message_handler(regexp=r'Верный совет')
+@slepaya.message_handler(regexp=r'Случайная примета')
 def send_random_quote_reg(message: Message):
     send_random_quote(message)
 
@@ -168,47 +176,34 @@ def send_generated_quote(message: Message):
     cid = message.chat.id
     # text = generate_quote('quotes.txt')
     text = NewlineText(quotes_markof).make_sentence()
+    # code, text = model.translate_generated(t=random.randint(10, 20)/100, words=random.randint(8, 9))
+    # if code == 200:
     if text:
-        slepaya.send_message(cid, text)
-        slepaya.send_message(cid, "Так сказал дух древний, " +
-                             "посетивший меня только что", reply_markup=MAIN_MARKUP)
+        slepaya.send_message(cid, text.capitalize()+'...', reply_markup=MAIN_MARKUP)
+        # slepaya.send_message(cid, "Так сказал дух древний, " +
+        #                      "посетивший меня только что", reply_markup=MAIN_MARKUP)
+        print(f"LOGS: [BADVICE] {cid}({message.from_user.username})")
     else:
-        slepaya.send_message(cid, "Дух древний промолчал", reply_markup=MAIN_MARKUP)
-    print(f"LOGS: [BADVICE] {cid}({message.from_user.username})")
+        # print(f"LOGS [BADVICE_EXCEPTION]: {code}: {text}")
+        slepaya.send_message(cid, "Что-то потеряла я связь с духом. Может @cognomen поможет", reply_markup=MAIN_MARKUP)
 
 
-@slepaya.message_handler(regexp=r'Чудной совет')
+@slepaya.message_handler(regexp=r'Сгенерировать примету')
 def send_generated_quote_reg(message: Message):
     send_generated_quote(message)
-
-
-@slepaya.message_handler(commands=['info'])
-def send_info(message: Message):
-    cid = message.chat.id
-    slepaya.send_message(cid, "Сказавши мне /badvice, " +
-                         "получишь мудрость чудную")
-    sleep(0.5)
-    slepaya.send_message(cid, "Их мне дух древний подсказывает, а я тебе пишу")
-    sleep(0.4)
-    slepaya.send_message(cid, "Дух говорит, что эти мудрости " +
-                         "из Марковской цепи берет")
-    sleep(0.6)
-    slepaya.send_message(cid, "А что это за зверь такой, Марковские цепи, " +
-                         "можно в ваших Интернетах посмотреть",
-                         reply_markup=MAIN_MARKUP)
-
-
-@slepaya.message_handler(regexp=r'Справка')
-def send_info_reg(message: Message):
-    send_info(message)
 
 
 @slepaya.message_handler(commands=['help'])
 def send_help(message: Message):
     cid = message.chat.id
+    lstm_button = InlineKeyboardMarkup()
+    lstm_button.add(InlineKeyboardButton(text="LSTM Wiki",
+                                         url="https://ru.wikipedia.org/wiki/Долгая_краткосрочная_память"))
     slepaya.send_message(cid, "Вот что жду от тебя услышать")
     sleep(0.6)
-    slepaya.send_message(cid, COMMANDS_MESSAGE)
+    slepaya.send_message(cid, text=COMMANDS_MESSAGE, reply_markup=MAIN_MARKUP)
+    sleep(0.5)
+    slepaya.send_message(cid, text=INFO_MESSAGE, reply_markup=lstm_button)
 
 
 @slepaya.message_handler(regexp=r'Команды')

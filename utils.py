@@ -1,6 +1,14 @@
+import json
+import os
+import random
 from typing import List
 
+import gensim
 from fuzzywuzzy import process, fuzz
+import keras
+import numpy as np
+import requests
+
 
 
 def searcher(q: str, full_text: List[str], cutoff=85) -> List[str]:
@@ -13,6 +21,7 @@ def searcher(q: str, full_text: List[str], cutoff=85) -> List[str]:
         return fratio
 
     quotes_indices = []
+
     for i, sent in enumerate(full_text):
         try:
             if process.extractBests(q, filter(lambda x: abs(len(q)-len(x)) < 2 and len(x) > 2, sent.split()),
@@ -32,3 +41,61 @@ def ending_decider(l: int, word_no_ending: str) -> str:
         return word_no_ending + 'ы'
     else:
         return word_no_ending
+
+
+class QuotesModel:
+    def __init__(self):
+        self.model = keras.models.load_model('good_model.h5')
+        self.word_model = gensim.models.Word2Vec.load('w2v.model')
+        self.vars = json.loads(open('variables.json', 'r').read())
+
+    def word2idx(self, word):
+        return self.word_model.wv.key_to_index[word]
+
+    def idx2word(self, idx):
+        return self.word_model.wv.index_to_key[idx]
+
+    def sample(self, predictions, temperature=0.75):
+        if temperature <= 0:
+            return np.argmax(predictions)
+        predictions = np.asarray(predictions).astype('float64')
+        predictions = np.log(predictions) / temperature
+        exp_predictions = np.exp(predictions)
+        predictions = exp_predictions / np.sum(exp_predictions)
+        probas = np.random.multinomial(1, predictions, 1)
+
+        return np.argmax(probas)
+
+    def generate_next(self, num_generated=10, temp=0.75) -> str:
+        text = random.choice(self.vars['beginings'])
+        word_idxs = [self.word2idx(word) for word in text.lower().split()]
+
+        for _ in range(num_generated):
+            prediction = self.model.predict(x=np.array(word_idxs))
+            idx = self.sample(prediction[-1], temperature=temp)
+            word_idxs.append(idx)
+
+        return ' '.join(self.idx2word(idx) for idx in word_idxs)
+
+    def translate_generated(self, folder_id: str = os.getenv('FOLDER_ID', "b1geh42nvb0dfevai47f"),
+                            texts: list = [], targetLanguageCode: str = "ru",
+                            t=0.75, words=8) -> str:
+        body = {
+            "folder_id": folder_id,
+            "texts": texts if texts
+                     else [self.generate_next(temp=t, num_generated=words)],
+            "targetLanguageCode": targetLanguageCode
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"API-Key {os.getenv('YA_TOKEN')}"
+        }
+
+        resp = requests.post("https://translate.api.cloud.yandex.net/translate/v2/translate",
+                             data=str(body), headers=headers)
+
+        if resp.ok:
+            return (200, resp.json()['translations'][0]['text'])
+        else:
+            return (400, resp.json()['message'])
