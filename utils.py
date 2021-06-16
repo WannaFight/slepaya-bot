@@ -82,7 +82,7 @@ class QuotesModel:
         body = {
             "folder_id": folder_id,
             "texts": texts if texts
-                     else [self.generate_next(temp=t, num_generated=words)],
+                     else [self.generate_next(temp=t, num_generated=words) for _ in range(5)],
             "targetLanguageCode": targetLanguageCode
         }
 
@@ -95,6 +95,9 @@ class QuotesModel:
                              data=str(body), headers=headers)
 
         if resp.ok:
-            return (200, resp.json()['translations'][0]['text'])
+            for i in resp.json()['translations']:
+                if ',' in i['text']:
+                    return (200, i['text'])
+            return (200, i['text'])
         else:
             return (400, resp.json()['message'])

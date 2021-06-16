@@ -47,7 +47,7 @@ INFO_MESSAGE = ('Сказавши мне "Сгенерировать приме�
 
 MAIN_MARKUP = ReplyKeyboardMarkup(resize_keyboard=True)
 MAIN_MARKUP.row(KeyboardButton('Случайная примета 🔀'),
-                KeyboardButton('Сгенерировать примету 🎲'))
+                KeyboardButton('Генерация приметы 🎲'))
 MAIN_MARKUP.row(KeyboardButton('Команды 📄'),
                 KeyboardButton('Поиск 🔍'))
 MAIN_MARKUP.row(KeyboardButton('Подписка 📥'),
@@ -175,20 +175,17 @@ def send_random_quote_reg(message: Message):
 def send_generated_quote(message: Message):
     cid = message.chat.id
     # text = generate_quote('quotes.txt')
-    text = NewlineText(quotes_markof).make_sentence()
-    # code, text = model.translate_generated(t=random.randint(10, 20)/100, words=random.randint(8, 9))
-    # if code == 200:
-    if text:
+    # text = NewlineText(quotes_markof).make_sentence()
+    code, text = model.translate_generated(t=random.randint(22, 40), words=random.randint(8, 9))
+    if code == 200:
         slepaya.send_message(cid, text.capitalize()+'...', reply_markup=MAIN_MARKUP)
-        # slepaya.send_message(cid, "Так сказал дух древний, " +
-        #                      "посетивший меня только что", reply_markup=MAIN_MARKUP)
         print(f"LOGS: [BADVICE] {cid}({message.from_user.username})")
     else:
-        # print(f"LOGS [BADVICE_EXCEPTION]: {code}: {text}")
+        print(f"LOGS [BADVICE_EXCEPTION]: {code}: {text}")
         slepaya.send_message(cid, "Что-то потеряла я связь с духом. Может @cognomen поможет", reply_markup=MAIN_MARKUP)
 
 
-@slepaya.message_handler(regexp=r'Сгенерировать примету')
+@slepaya.message_handler(regexp=r'Генерация приметы')
 def send_generated_quote_reg(message: Message):
     send_generated_quote(message)
 
